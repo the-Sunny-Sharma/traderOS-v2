@@ -62,22 +62,26 @@ spring:
           # Lower temperature = more deterministic, factual responses.
           # 0.3 is appropriate for tax/financial Q&A.
           temperature: 0.3
-          max-token: 1024
+          max-tokens: 1024
 
-    embedding:
-      transformer:
-        onnx:
-          # Local ONNX embedding model - all-MiniLM-L6-v2.
-          # Runs entirely on-device: no external API call for embeddings.
-          # Produces 384-dimensional vectors for pgvector similarity search.
-          model-uri: classpath:onnx/model.onnx
-          tokenizer-uri: classpath:onnx/tokenizer.json
-        tokenizer:
-          # MiniLM maximum sequence length is 128 tokens.
-          # Text longer than this is truncated before embedding.
-          max-length: 128
-          padding: true
-          truncation: true
+#    embedding:
+#      transformer:
+#        onnx:
+#          # Local ONNX embedding model - all-MiniLM-L6-v2.
+#          # Runs entirely on-device: no external API call for embeddings.
+#          # Produces 384-dimensional vectors for pgvector similarity search.
+#          model-uri: classpath:onnx/model.onnx
+#          tokenizer-uri: classpath:onnx/tokenizer.json
+#        tokenizer:
+#          # MiniLM maximum sequence length is 128 tokens.
+#          # Text longer than this is truncated before embedding.
+#          max-length: 128
+#          padding: true
+#          truncation: true
+
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.transformers.TransformersEmbeddingModelAutoConfiguration
 
 server:
   port: 8080
@@ -97,6 +101,9 @@ management:
   endpoint:
     health:
       show-details: always
+  # Permit health endpoint without authentication (dev only)
+  security:
+    enabled: false
 
 upload:
   dir: ${UPLOAD_DIR:./uploads}

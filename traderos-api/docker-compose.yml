@@ -1,0 +1,33 @@
+# Local development infrastructure.
+# Runs PostgreSQL with the pgvector extension (needed for RAG embeddings)
+# and Redis (needed for caching).
+#
+# Start:  docker compose up -d
+# Stop:   docker compose down
+# Reset: docker compose down -v (WARNING: deletes all data)
+
+services:
+
+  postgres:
+    # ankane/pgvector is the offical PostgreSQL + pgvector image.
+    # Plain postgres:16 does NOT have the vector extension - don't use it.
+    image: pgvector/pgvector:pg16
+    container_name: traderos-postgres
+    environment:
+      POSTGRES_DB: traderos
+      POSTGRES_USER: traderos
+      POSTGRES_PASSWORD: root123
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persist data across container restarts.
+      # 'docker compose down' keeps data; 'docker compose down -v' deletes it.
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: traderos-redis
+    ports:
+      - "6379:6379"
+volumes:
+  postgres_data:
