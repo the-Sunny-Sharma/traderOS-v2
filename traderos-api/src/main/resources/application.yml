@@ -1,0 +1,102 @@
+spring:
+  application:
+    name: traderos-api
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/traderos}
+    username: ${DB_USERNAME:traderos}
+    password: ${DB_PASSWORD:root123}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    # open-in-view: false - disables the OSIV anti-pattern.
+    # OSIV keeps a DB transaction open for the entire HTTP request lifecycle,
+    # including view rendering. This holds DB connection longer that needed
+    # and causes subtle lazy-loading bugs. Always disable in REST APIs.
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          # Insert up to 50 rows in a single batch SQL statement.
+          # Critical for performance when saving thousands of trade rows.
+          batch_size: 50
+          # Reorder inserts/updates to maximise batching effectiveness.
+          order_inserts: true
+          order_updates: true
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  security:
+    user:
+      password: disabled
+
+  threads:
+    virtual:
+      enabled: true
+
+  batch:
+    job:
+      # Do not auto-run Spring Batch jobs on startup.
+      # Jobs are triggered explicitly via the async processing pipeline`
+      enabled: false
+
+  ai:
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY}
+      chat:
+        options:
+          # Claude model used for RAG chat responses.
+          model: claude-sonnet-4-20250514
+          # Lower temperature = more deterministic, factual responses.
+          # 0.3 is appropriate for tax/financial Q&A.
+          temperature: 0.3
+          max-token: 1024
+
+    embedding:
+      transformer:
+        onnx:
+          # Local ONNX embedding model - all-MiniLM-L6-v2.
+          # Runs entirely on-device: no external API call for embeddings.
+          # Produces 384-dimensional vectors for pgvector similarity search.
+          model-uri: classpath:onnx/model.onnx
+          tokenizer-uri: classpath:onnx/tokenizer.json
+        tokenizer:
+          # MiniLM maximum sequence length is 128 tokens.
+          # Text longer than this is truncated before embedding.
+          max-length: 128
+          padding: true
+          truncation: true
+
+server:
+  port: 8080
+
+jwt:
+  secret: ${JWT_SECRET:dev-secret-replace-in-production}
+  expiration-ms: 86400000
+
+engine:
+  url: ${ENGINE_URL:http://localhost:8001}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always
+
+upload:
+  dir: ${UPLOAD_DIR:./uploads}
